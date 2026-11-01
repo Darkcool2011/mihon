@@ -77,6 +77,11 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
 
+            // Builds of the LG Dual Screen fork install beside the official app
+            if (project.findProperty("dualScreenId") != null) {
+                applicationIdSuffix = ".dualscreen"
+            }
+
             signingConfig = debug.signingConfig
 
             isProfileable = true

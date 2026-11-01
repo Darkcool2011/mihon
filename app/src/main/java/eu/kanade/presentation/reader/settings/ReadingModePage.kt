@@ -139,6 +139,19 @@ private fun ColumnScope.PagerViewerSettings(viewModel: ReaderSettingsViewModel) 
             pref = viewModel.preferences.dualPageRotateToFitInvert,
         )
     }
+
+    val dualScreenBookMode by viewModel.preferences.dualScreenBookMode.collectAsState()
+    CheckboxItem(
+        label = stringResource(MR.strings.pref_dual_screen_book_mode),
+        pref = viewModel.preferences.dualScreenBookMode,
+    )
+
+    if (dualScreenBookMode) {
+        CheckboxItem(
+            label = stringResource(MR.strings.pref_dual_screen_swap_sides),
+            pref = viewModel.preferences.dualScreenSwapSides,
+        )
+    }
 }
 
 @Composable

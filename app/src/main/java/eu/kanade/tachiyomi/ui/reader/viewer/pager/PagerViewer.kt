@@ -89,6 +89,15 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
      */
     private val adapter = PagerViewerAdapter(this, pagerItems)
 
+    /**
+     * Shows the facing page on a second display, like the LG Dual Screen. Vertical pagers don't read as a book.
+     */
+    private val dualScreen = if (this is VerticalPagerViewer) {
+        null
+    } else {
+        DualScreenBookController(this) { adapter.items }
+    }
+
     private val tracker = PagerPageTracker(activity, pagerItems, ::setChaptersInternal) { page, forward ->
         getPageHolder(page)?.onPageSelected(forward)
     }
@@ -99,6 +108,7 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
                 activity.hideMenu()
             }
             tracker.onPageChange(position)
+            dualScreen?.onPageChanged(position)
         }
 
         override fun onPageScrollStateChanged(state: Int) {
@@ -159,6 +169,7 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
 
     override fun destroy() {
         super.destroy()
+        dualScreen?.destroy()
         scope.cancel()
     }
 
@@ -179,6 +190,7 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
             pageColorFilter = pageFilter
             // The pager keeps every page it holds as a child.
             pager.children.filterIsInstance<PagerPageHolder>().forEach { it.pageColorFilter = pageFilter }
+            dualScreen?.setColorFilter(pageFilter)
         }
         AndroidView(
             factory = { context -> DisallowInterceptBarrier(context).apply { addView(pager) } },
@@ -224,6 +236,7 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
         pager.addOnPageChangeListener(pagerListener)
         // Manually call onPageChange to update the UI
         tracker.onPageChange(pager.currentItem)
+        dualScreen?.onPageChanged(pager.currentItem)
     }
 
     /**
@@ -237,6 +250,7 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
             // manually call onPageChange since ViewPager listener is not triggered in this case
             if (currentPosition == position) {
                 tracker.onPageChange(position)
+                dualScreen?.onPageChanged(position)
             }
         } else {
             logcat { "Page $page not found in adapter" }
@@ -261,7 +275,7 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
             if (holder != null && paged.navigateToPan && holder.canPanRight()) {
                 holder.panRight()
             } else {
-                pager.setCurrentItem(pager.currentItem + 1, general.usePageTransitions)
+                pager.setCurrentItem(pager.currentItem + pageStep(1), general.usePageTransitions)
             }
         }
     }
@@ -275,9 +289,20 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
             if (holder != null && paged.navigateToPan && holder.canPanLeft()) {
                 holder.panLeft()
             } else {
-                pager.setCurrentItem(pager.currentItem - 1, general.usePageTransitions)
+                pager.setCurrentItem(pager.currentItem + pageStep(-1), general.usePageTransitions)
             }
         }
+    }
+
+    /**
+     * How far to move for a page turn towards [direction] (1 right, -1 left). In book mode the second display already
+     * shows the next item, so a turn skips it, unless that item is a chapter transition or there's nothing after it.
+     */
+    private fun pageStep(direction: Int): Int {
+        if (dualScreen?.isActive != true) return direction
+        val skipped = adapter.items.getOrNull(pager.currentItem + direction)
+        val target = pager.currentItem + 2 * direction
+        return if (skipped is ReaderPage && target in adapter.items.indices) 2 * direction else direction
     }
 
     /**
@@ -289,12 +314,14 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
         adapter.refresh()
         pager.adapter = adapter
         pager.setCurrentItem(currentItem, false)
+        dualScreen?.invalidate()
     }
 
     fun onPageSplit(currentPage: ReaderPage, newPage: InsertPage) {
         activity.runOnUiThread {
             // Need to insert on UI thread else images will go blank
             adapter.onPageSplit(currentPage, newPage)
+            dualScreen?.onPageChanged(pager.currentItem)
         }
     }
 

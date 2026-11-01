@@ -670,6 +670,8 @@
     <string name="overlay_header">Superposición</string>
     <string name="pref_page_rotate">Girar las páginas anchas para adaptarlas a la pantalla</string>
     <string name="pref_page_rotate_invert">Girar las páginas anchas en la dirección opuesta</string>
+    <string name="pref_dual_screen_book_mode">Modo libro en la segunda pantalla (LG Dual Screen)</string>
+    <string name="pref_dual_screen_swap_sides">Invertir el lado de la segunda pantalla</string>
     <string name="pref_debug_info">Información de depuración</string>
     <string name="pref_chapter_swipe_start">Al deslizar a la izquierda en un capítulo</string>
     <string name="pref_chapter_swipe_end">Al deslizar a la derecha en un capítulo</string>

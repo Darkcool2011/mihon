@@ -405,6 +405,8 @@
     <string name="pref_dual_page_invert_summary">If the placement of the split wide pages don\'t match reading direction</string>
     <string name="pref_page_rotate">Rotate wide pages to fit</string>
     <string name="pref_page_rotate_invert">Flip orientation of rotated wide pages</string>
+    <string name="pref_dual_screen_book_mode">Book mode on a second screen (LG Dual Screen)</string>
+    <string name="pref_dual_screen_swap_sides">Swap second screen side</string>
     <string name="pref_double_tap_zoom">Double tap to zoom</string>
     <string name="pref_cutout_short">Show content in cutout area</string>
     <string name="pref_page_transitions">Animate page transitions</string>

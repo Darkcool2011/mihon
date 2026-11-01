@@ -134,6 +134,11 @@ class ReaderPreferences(
         false,
     )
 
+    // Book mode across a second display, like the LG Dual Screen
+    val dualScreenBookMode: Preference<Boolean> = preferenceStore.getBoolean("pref_dual_screen_book_mode", true)
+
+    val dualScreenSwapSides: Preference<Boolean> = preferenceStore.getBoolean("pref_dual_screen_swap_sides", false)
+
     val dualPageRotateToFitWebtoon: Preference<Boolean> = preferenceStore.getBoolean(
         "pref_dual_page_rotate_webtoon",
         false,
