@@ -66,6 +66,9 @@ class DualScreenBookController(
     private var colorFilter: ColorFilter? = null
     private var started = activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
 
+    /** Whether the diagnostics were shown for this reader session. */
+    private var diagnosed = false
+
     private val displayListener = object : DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId: Int) = update()
         override fun onDisplayRemoved(displayId: Int) = update()
@@ -124,21 +127,41 @@ class DualScreenBookController(
     }
 
     private fun update() {
-        val display = if (started && preferences.dualScreenBookMode.get()) findOtherDisplay() else null
+        val enabled = started && preferences.dualScreenBookMode.get()
+        val display = if (enabled) findOtherDisplay() else null
         val current = presentation
         if (current != null && (display == null || current.display.displayId != display.displayId)) {
             dismiss()
         }
+        var result = if (display == null) "no second display found" else "already showing on ${display.displayId}"
         if (display != null && presentation == null) {
             presentation = try {
                 BookPresentation(activity, display).also { it.show() }
             } catch (e: Exception) {
                 logcat(LogPriority.WARN, e) { "Couldn't show the book page on display ${display.displayId}" }
+                result = "error on ${display.displayId}: ${e.javaClass.simpleName}: ${e.message}"
                 null
             }
+            if (presentation != null) result = "showing on ${display.displayId}"
             shownItem = null
         }
+        if (enabled && !diagnosed) {
+            diagnosed = true
+            showDiagnostics(result)
+        }
         refreshPage()
+    }
+
+    /**
+     * Temporary diagnostics for testing on the LG Dual Screen: lists the displays Android reports and what happened.
+     */
+    private fun showDiagnostics(result: String) {
+        val displays = displayManager?.displays.orEmpty().joinToString("\n") { d ->
+            "• ${d.displayId} '${d.name}' state=${d.state} flags=${d.flags}"
+        }
+        val text = "Dual Screen (reader on ${currentDisplayId()})\n$displays\n→ $result"
+        logcat(LogPriority.INFO) { text }
+        android.widget.Toast.makeText(activity, text, android.widget.Toast.LENGTH_LONG).show()
     }
 
     private fun dismiss() {
@@ -166,8 +189,10 @@ class DualScreenBookController(
         val dm = displayManager ?: return null
         val current = currentDisplayId()
         val usable = { display: Display -> display.displayId != current && display.state != Display.STATE_OFF }
+        // Some devices report the accessory display as off or unknown, so fall back to any other display.
         return dm.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION).firstOrNull(usable)
             ?: dm.displays.firstOrNull(usable)
+            ?: dm.displays.firstOrNull { it.displayId != current }
     }
 
     private fun refreshPage() {
