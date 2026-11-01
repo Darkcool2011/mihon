@@ -156,12 +156,26 @@ class DualScreenBookController(
      * Temporary diagnostics for testing on the LG Dual Screen: lists the displays Android reports and what happened.
      */
     private fun showDiagnostics(result: String) {
-        val displays = displayManager?.displays.orEmpty().joinToString("\n") { d ->
+        val dm = displayManager
+        val displays = dm?.displays.orEmpty().joinToString("\n") { d ->
             "• ${d.displayId} '${d.name}' state=${d.state} flags=${d.flags}"
         }
-        val text = "Dual Screen (reader on ${currentDisplayId()})\n$displays\n→ $result"
+        val presentationIds = dm?.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION).orEmpty()
+            .joinToString { it.displayId.toString() }
+        val text = buildString {
+            appendLine("${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
+            appendLine("Reader on display ${currentDisplayId()}")
+            appendLine("Displays:")
+            appendLine(displays.ifEmpty { "(none)" })
+            appendLine("Presentation displays: ${presentationIds.ifEmpty { "(none)" }}")
+            append("Result: $result")
+        }
         logcat(LogPriority.INFO) { text }
-        android.widget.Toast.makeText(activity, text, android.widget.Toast.LENGTH_LONG).show()
+        android.app.AlertDialog.Builder(activity)
+            .setTitle("Dual Screen")
+            .setMessage(text)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun dismiss() {
