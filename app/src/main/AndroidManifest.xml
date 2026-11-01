@@ -164,6 +164,15 @@
                 android:resource="@xml/s_pen_actions" />
         </activity>
 
+        <!-- Facing page of the reader's book mode, opened on a second display such as the LG Dual Screen -->
+        <activity
+            android:name=".ui.reader.viewer.pager.DualScreenPageActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:resizeableActivity="true"
+            android:taskAffinity="${applicationId}.dualscreenpage" />
+
         <activity
             android:name=".ui.security.UnlockActivity"
             android:exported="false"
