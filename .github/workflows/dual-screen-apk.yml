@@ -26,7 +26,9 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build app
-        run: ./gradlew assembleRelease -Pdist=ci -PdualScreenId=true
+        # Sin telemetría (el Firebase del proyecto oficial no conoce este paquete) ni actualizador
+        # (ofrecería instalar el Mihon oficial en lugar de esta versión).
+        run: ./gradlew assembleRelease -Pdist=ci -PdualScreenId=true -Pinclude-telemetry=false -Penable-updater=false
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
